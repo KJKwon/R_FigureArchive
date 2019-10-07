@@ -2,6 +2,8 @@ library(ggplot2)
 library(reshape2)
 #Iron related gene error bar
 tbl = read.table('191002_Iron_treat_SH-SY5Y_WST-1.txt',sep='\t',row.names = 1, header = TRUE)
+#Change values into percentage
+tbl = apply(t(tbl,1,function(x){(x/tbl[,1])*100}))
 val.Mean = apply(tbl,2,mean)
 val.Mean = c(as.numeric(val.Mean))
 #Calculate standard error
