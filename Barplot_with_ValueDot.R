@@ -25,6 +25,7 @@ p = ggplot(tbl.plot,aes(x = log10(value+1), y = variable)) + geom_line() + geom_
 plot(p)
 
 ##geom_point = scatter_plot, geom_errorbar = error_bar
+
 p = ggplot() + geom_point(aes(x = log10(variable+1), y = value),tbl.dotplot)+ 
   geom_smooth(data= tbl.dotplot, aes(x = log10(variable+1), y = value), method = "lm", formula = y ~ poly(x,2), se = FALSE) + 
   geom_errorbar(aes(x = log10(value+1), ymin = variable - se, ymax = variable + se), tbl.plot)+
@@ -34,3 +35,6 @@ p = ggplot() + geom_point(aes(x = log10(variable+1), y = value),tbl.dotplot)+
         axis.text.x = element_text(colour = 'black', size = 15), axis.text.y = element_text(colour = 'black', size = 15))+ 
   xlab('log(FeCl2) uM') + ylab('% WST-1 Absorbance\n(compared to control)')
 plot(p)
+#Find coefficient of geom_smooth formula
+smooth.vals = lm(formula = value ~ poly(log10(variable + 1), 2, raw = TRUE), data = tbl.dotplot)
+
