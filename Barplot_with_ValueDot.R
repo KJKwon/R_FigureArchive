@@ -2,8 +2,7 @@ library(ggplot2)
 library(reshape2)
 #Iron related gene error bar
 tbl = read.table('191002_Iron_treat_SH-SY5Y_WST-1.txt',sep='\t',row.names = 1, header = TRUE)
-#Change values into percentage
-tbl = apply(t(tbl,1,function(x){(x/tbl[,1])*100}))
+tbl = apply(t(tbl),1,function(x){(x/tbl[,1])*100})
 val.Mean = apply(tbl,2,mean)
 val.Mean = c(as.numeric(val.Mean))
 #Calculate standard error
@@ -12,17 +11,26 @@ val.se = c(as.numeric(val.se))
 tbl.dot = tbl
 #Melt table for ggplot2 plotting
 tbl.dotplot = melt(tbl.dot)
-tbl.dotplot$variable = rep(c('CTRL','100uM','200uM','500uM','1mM','2mM','5mM','10mM','20mM'), times = 1, each = 5) 
+tbl.dotplot$variable = rep(c(0,100,200,500,1000,2000,5000,10000,20000), times = 1, each = 5) 
+#Synchronize plot name to dotplot variable name
 tbl.new = t(data.frame(val.Mean))
-#Synchronize barplot name to dotplot variable name
-colnames(tbl.new) = c('CTRL','100uM','200uM','500uM','1mM','2mM','5mM','10mM','20mM')
-tbl.barplot = melt(tbl.new)
-tbl.barplot$se = val.se
-tbl.barplot = tbl.barplot[,2:4]
-colnames(tbl.barplot) = c('variable', 'value', 'se')
-#ggplot states barplot, geom_point states value of each variable
-p = ggplot(tbl.barplot,aes(x = variable, y = value)) + geom_bar(stat='identity', position = 'dodge')+
-  geom_errorbar(aes(ymin = value - se, ymax = value + se), position =position_dodge(0.9), width = 0.2)+
-  geom_point(aes(x = variable, y = value), tbl.dotplot, position = position_dodge(0.9))+
-  theme(text= element_text(size = 15), legend.title = element_blank())+ xlab(NULL) +ylab('Absorbance')
+tbl.plot = melt(tbl.new)
+tbl.plot$variable = c(0,100,200,500,1000,2000,5000,10000,20000)
+tbl.plot$se = val.se
+tbl.plot = tbl.plot[,3:5]
+colnames(tbl.plot) = c('variable', 'value', 'se')
+p = ggplot(tbl.plot,aes(x = log10(value+1), y = variable)) + geom_line() + geom_point(aes(x = log10(variable+1) , y = value), tbl.dotplot)+
+  geom_errorbar(aes(ymin = variable - se, ymax = variable + se))+
+  theme(text = element_text(size = 15), legend.title = element_blank())+ xlab('log(FeCl2) uM') + ylab('Absorbance(450nm-690nm')
+plot(p)
+
+##geom_point = scatter_plot, geom_errorbar = error_bar
+p = ggplot() + geom_point(aes(x = log10(variable+1), y = value),tbl.dotplot)+ 
+  geom_smooth(data= tbl.dotplot, aes(x = log10(variable+1), y = value), method = "lm", formula = y ~ poly(x,2), se = FALSE) + 
+  geom_errorbar(aes(x = log10(value+1), ymin = variable - se, ymax = variable + se), tbl.plot)+
+#panel design part
+  theme(text = element_text(size = 15), legend.title = element_blank(), panel.background = element_blank(),
+        panel.border = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(size = 1, colour = 'black'),
+        axis.text.x = element_text(colour = 'black', size = 15), axis.text.y = element_text(colour = 'black', size = 15))+ 
+  xlab('log(FeCl2) uM') + ylab('% WST-1 Absorbance\n(compared to control)')
 plot(p)
